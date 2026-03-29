@@ -21,6 +21,7 @@
 
 typedef struct state {
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L
+    EVP_CIPHER *cipher;
     EVP_CIPHER_CTX *enc_ctx;
     EVP_CIPHER_CTX *dec_ctx;
     int padding;
@@ -233,7 +234,7 @@ CODE:
                                         NULL, key, iv))
             croak ("EVP_DecryptInit_ex failed");
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
-        EVP_CIPHER_free(cipher);
+        RETVAL->cipher = cipher;
 #endif
 #else
         AES_set_encrypt_key(key,keysize*8,&RETVAL->enc_key);
@@ -354,6 +355,8 @@ DESTROY(self)
     Crypt::OpenSSL::AES self
 CODE:
 #if OPENSSL_VERSION_NUMBER >= 0x00908000L
+    if (self->cipher)
+      EVP_CIPHER_free(self->cipher);
     EVP_CIPHER_CTX_free(self->enc_ctx);
     EVP_CIPHER_CTX_free(self->dec_ctx);
 #endif
